@@ -258,9 +258,9 @@ def opentomongo():
 
 
 #def dojob():
-#    scheduler = BlockingScheduler()
-#    scheduler.add_job(opentomongo, 'interval', seconds=3000, id='insertData&CalculateElo')
-#    scheduler.start()
+#   scheduler = BlockingScheduler()
+#   scheduler.add_job(opentomongo, 'interval', seconds=600, id='insertData&CalculateElo')
+#   scheduler.start()
 
 
 #dojob()
