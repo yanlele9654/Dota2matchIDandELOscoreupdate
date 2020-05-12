@@ -129,6 +129,7 @@ def opentomongo():
     dota_stats_new = list(db.dota_basic_data_2020.find({}, {
         'radiant_team.team_id': 1, 'dire_team.team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
         'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1}))
+    print('success get the match info')
     dota_stats1 = pd.DataFrame(dota_stats)
     dota_stats2 = pd.DataFrame(dota_stats_old)
     dota_stats3 = pd.DataFrame(dota_stats_new)
