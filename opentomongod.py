@@ -17,6 +17,7 @@ def opentomongo():
     db = client['admin']
     # 'admin'的账号密码
     db.authenticate(db_eng_1['user'], db_eng_1['password'])
+    print('success connet the database')
 
     # sql语句建立查询
     sql = """
@@ -73,7 +74,6 @@ def opentomongo():
     # 关闭服务器
     # 关闭服务器
 
-    # client.close()
     dota_players_2019 = pd.DataFrame(list(db.players_2019.find(
         {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
     dota_players_2018 = pd.DataFrame(list(db.players_2018.find(
@@ -86,6 +86,7 @@ def opentomongo():
     dota_players_2019 = dota_players_2019.reset_index(drop=True)
     dota_players_2019_win = dota_players_2019[dota_players_2019.win == 1]
     dota_players_2019_win = dota_players_2019_win.reset_index(drop=True)
+    print('success get the player info')
     W_id = []
     W_account = []
     for i in range(len(dota_players_2019_win) - 1):
@@ -238,7 +239,7 @@ def opentomongo():
     elo_player = elo_player.elo_player()
 
     dota_stats1_elo = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
-
+    print('success calculator the new elo score')
     dota_team_id = set(list(dota_stats1.W_id) + list(dota_stats1.L_id))
     dota_team_id = pd.DataFrame(list(dota_team_id))
 
