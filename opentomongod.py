@@ -9,9 +9,10 @@ import dota2_api
 
 def opentomongo():
     db_eng_1 = DBA.DbInfoGenerator('vpgame').info
-
+    db_eng_2 = DBA.DbInfoGenerator('model_builder').info
     # 连接到本地库
     client = pymongo.MongoClient("dds-bp1f5b9c442b9524-pub.mongodb.rds.aliyuncs.com", 3717)
+    Newclient = pymongo.MongoClient(db_eng_2['host'], 27017)
 
     # 连接database'damin'
     db = client['admin']
@@ -131,6 +132,14 @@ def opentomongo():
         'radiant_team.team_id': 1, 'dire_team.team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
         'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1}))
     print('success get the match info')
+    client.close()
+    print('disconnet to the vp database')
+    # 连接database'damin'
+    New_db = Newclient['admin']
+    # 'admin'的账号密码
+    New_db.authenticate(db_eng_2['user'], db_eng_2['password'])
+    print('success connet the model_builder database')
+
     dota_stats1 = pd.DataFrame(dota_stats)
     dota_stats2 = pd.DataFrame(dota_stats_old)
     dota_stats3 = pd.DataFrame(dota_stats_new)
@@ -253,10 +262,10 @@ def opentomongo():
 
     records1 = dota_team_id.to_dict('records')
 
-    db.player_Team_elo.drop()
-    db.player_Team_elo.insert_many(records1)
-    print('success insert the new Elo score')
-    client.close()
+    New_db.player_Team_elo.drop()
+    New_db.player_Team_elo.insert_many(records1)
+    print('success insert the new Elo score to New_db')
+    Newclient.close()
 
 
 #def dojob():
