@@ -81,42 +81,42 @@ def opentomongo():
         {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
     dota_players_2020 = pd.DataFrame(list(db.players_2020.find(
         {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
-    dota_players_2019 = dota_players_2019.append(dota_players_2020)
-    dota_players_2019 = dota_players_2019.append(dota_players_2018)
-    dota_players_2019 = dota_players_2019.sort_values(by=['start_time', 'match_id'])
-    dota_players_2019 = dota_players_2019.reset_index(drop=True)
-    dota_players_2019_win = dota_players_2019[dota_players_2019.win == 1]
-    dota_players_2019_win = dota_players_2019_win.reset_index(drop=True)
+    dota_players_total = dota_players_2019.append(dota_players_2020)
+    dota_players_total = dota_players_total.append(dota_players_2018)
+    dota_players_total = dota_players_total.sort_values(by=['start_time', 'match_id'])
+    dota_players_total = dota_players_total.reset_index(drop=True)
+    dota_players_total_win = dota_players_total[dota_players_total.win == 1]
+    dota_players_total_win = dota_players_total_win.reset_index(drop=True)
     print('success get the player info')
     W_id = []
     W_account = []
-    for i in range(len(dota_players_2019_win) - 1):
-        if dota_players_2019_win.match_id[i] == dota_players_2019_win.match_id[i + 1]:
-            W_id.append(dota_players_2019_win.account_id[i])
+    for i in range(len(dota_players_total_win) - 1):
+        if dota_players_total_win.match_id[i] == dota_players_total_win.match_id[i + 1]:
+            W_id.append(dota_players_total_win.account_id[i])
         else:
-            W_id.append(dota_players_2019_win.account_id[i])
+            W_id.append(dota_players_total_win.account_id[i])
             W_account.append(W_id)
             W_id = []
-    dota_players_2019_lose = dota_players_2019[dota_players_2019.win == 0]
+    dota_players_total_lose = dota_players_total[dota_players_total.win == 0]
 
-    dota_players_2019_lose = dota_players_2019_lose.reset_index(drop=True)
+    dota_players_total_lose = dota_players_total_lose.reset_index(drop=True)
     L_id = []
     L_account = []
-    for i in range(len(dota_players_2019_lose) - 1):
-        if dota_players_2019_lose.match_id[i] == dota_players_2019_lose.match_id[i + 1]:
-            L_id.append(dota_players_2019_lose.account_id[i])
+    for i in range(len(dota_players_total_lose) - 1):
+        if dota_players_total_lose.match_id[i] == dota_players_total_lose.match_id[i + 1]:
+            L_id.append(dota_players_total_lose.account_id[i])
         else:
-            L_id.append(dota_players_2019_lose.account_id[i])
+            L_id.append(dota_players_total_lose.account_id[i])
             L_account.append(L_id)
             L_id = []
 
-    match_id = dota_players_2019_win.groupby('match_id')['match_id'].head(1)
+    match_id = dota_players_total_win.groupby('match_id')['match_id'].head(1)
     match_id = match_id.reset_index(drop=True)
     match_id = match_id.drop(match_id.index[-1])
     match_id = list(match_id)
-    start_time = dota_players_2019_win.groupby('match_id')['start_time'].head(1)
-    start_time = start_time.reset_index(drop=True)
-    start_time = start_time.drop(start_time.index[-1])
+    #start_time = dota_players_total_win.groupby('match_id')['start_time'].head(1)
+    #start_time = start_time.reset_index(drop=True)
+    #start_time = start_time.drop(start_time.index[-1])
     #start_time = list(start_time)
     Winer_players = pd.DataFrame([match_id, W_account, L_account])
     Winer_players = Winer_players.T
@@ -132,6 +132,11 @@ def opentomongo():
         'radiant_team.team_id': 1, 'dire_team.team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
         'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1}))
     print('success get the match info')
+
+    #提取FBL_info
+    FirstBlood_info_df = pd.DataFrame(list(db.FirstBlood.find({}, {'_id': 0})))
+    FirstBlood_info_df['match_id'] = FirstBlood_info_df['match_id'].astype('int')
+    print('success get the FBL info')
     client.close()
     print('disconnet to the vp database')
     # 连接database'damin'
@@ -204,6 +209,9 @@ def opentomongo():
         radiant_team_id.append(str(row.radiant_team['team_id']))
     dota_stats1['dire_team'] = dire_team_id
     dota_stats1['radiant_team'] = radiant_team_id
+    FBL_Match_info=dota_stats1[['match_id','dire_team','radiant_team']]
+    FBL_Match_info=FBL_Match_info.rename(columns={'dire_team':'dire_team_id','radiant_team':'radiant_team_id'})
+    FBL_Match_Total_df = FBL_Match_info.merge(FirstBlood_info_df, on='match_id')
 
     ## ELO评分team
     dota_stats1 = dota_stats1.reset_index(drop=True)
@@ -265,7 +273,12 @@ def opentomongo():
     New_db.player_Team_elo.drop()
     New_db.player_Team_elo.insert_many(records1)
     print('success insert the new Elo score to New_db')
+    import FBL_stats_win
+    FBL_records_dict=FBL_stats_win.FBL_stats_win_cal(FBL_Match_Total_df)
+    New_db.FBL_Team_elo.drop()
+    New_db.FBL_Team_elo.insert_many(FBL_records_dict)
     Newclient.close()
+    print('success insert the FBL info to New_db')
 
 
 #def dojob():
