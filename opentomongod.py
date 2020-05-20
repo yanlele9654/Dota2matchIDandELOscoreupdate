@@ -137,7 +137,7 @@ def opentomongo():
     FirstBlood_info_df = pd.DataFrame(list(db.FirstBlood.find({}, {'_id': 0})))
     FirstBlood_info_df['match_id'] = FirstBlood_info_df['match_id'].astype('int')
     print('success get the FBL info')
-    client.close()
+    #client.close()
     print('disconnet to the vp database')
     # 连接database'damin'
     New_db = Newclient['admin']
@@ -269,7 +269,9 @@ def opentomongo():
     dota_team_id['elo_score'] = dota_stats1_elo
 
     records1 = dota_team_id.to_dict('records')
-
+    db.player_Team_elo.drop()
+    db.player_Team_elo.insert_many(records1)
+    print('success insert the new Elo score to db')
     New_db.player_Team_elo.drop()
     New_db.player_Team_elo.insert_many(records1)
     print('success insert the new Elo score to New_db')
@@ -277,6 +279,7 @@ def opentomongo():
     FBL_records_dict=FBL_stats_win.FBL_stats_win_cal(FBL_Match_Total_df)
     New_db.FBL_Team_elo.drop()
     New_db.FBL_Team_elo.insert_many(FBL_records_dict)
+    client.close()
     Newclient.close()
     print('success insert the FBL info to New_db')
 
