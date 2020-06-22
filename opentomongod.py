@@ -56,7 +56,7 @@ def opentomongo():
         # print(mi['match_id'])
         if mi['match_id'] not in match_list_haven:
             match_info = dota2_api.get_api_json(
-                'https://api.opendota.com/api/matches/{}'.format(mi['match_id']))
+                'https://api.opendota.com/api/matches/{}?ccdc7024-3890-44dd-b602-ec193dee6f23'.format(mi['match_id']))
             print(mi)
             db.dota_basic_data_2020.insert_one(match_info)
             m = m + 1
@@ -114,10 +114,10 @@ def opentomongo():
     match_id = match_id.reset_index(drop=True)
     match_id = match_id.drop(match_id.index[-1])
     match_id = list(match_id)
-    #start_time = dota_players_total_win.groupby('match_id')['start_time'].head(1)
-    #start_time = start_time.reset_index(drop=True)
-    #start_time = start_time.drop(start_time.index[-1])
-    #start_time = list(start_time)
+    # start_time = dota_players_total_win.groupby('match_id')['start_time'].head(1)
+    # start_time = start_time.reset_index(drop=True)
+    # start_time = start_time.drop(start_time.index[-1])
+    # start_time = list(start_time)
     Winer_players = pd.DataFrame([match_id, W_account, L_account])
     Winer_players = Winer_players.T
     Winer_players.columns = ['match_id', 'W_account', 'L_account']
@@ -133,11 +133,11 @@ def opentomongo():
         'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1}))
     print('success get the match info')
 
-    #提取FBL_info
+    # 提取FBL_info
     FirstBlood_info_df = pd.DataFrame(list(db.FirstBlood.find({}, {'_id': 0})))
     FirstBlood_info_df['match_id'] = FirstBlood_info_df['match_id'].astype('int')
     print('success get the FBL info')
-    #client.close()
+    # client.close()
     print('disconnet to the vp database')
     # 连接database'damin'
     New_db = Newclient['admin']
@@ -209,8 +209,8 @@ def opentomongo():
         radiant_team_id.append(str(row.radiant_team['team_id']))
     dota_stats1['dire_team'] = dire_team_id
     dota_stats1['radiant_team'] = radiant_team_id
-    FBL_Match_info=dota_stats1[['match_id','dire_team','radiant_team']]
-    FBL_Match_info=FBL_Match_info.rename(columns={'dire_team':'dire_team_id','radiant_team':'radiant_team_id'})
+    FBL_Match_info = dota_stats1[['match_id', 'dire_team', 'radiant_team']]
+    FBL_Match_info = FBL_Match_info.rename(columns={'dire_team': 'dire_team_id', 'radiant_team': 'radiant_team_id'})
     FBL_Match_Total_df = FBL_Match_info.merge(FirstBlood_info_df, on='match_id')
 
     ## ELO评分team
@@ -276,7 +276,7 @@ def opentomongo():
     New_db.player_Team_elo.insert_many(records1)
     print('success insert the new Elo score to New_db')
     import FBL_stats_win
-    FBL_records_dict=FBL_stats_win.FBL_stats_win_cal(FBL_Match_Total_df)
+    FBL_records_dict = FBL_stats_win.FBL_stats_win_cal(FBL_Match_Total_df)
     New_db.FBL_Team_elo.drop()
     New_db.FBL_Team_elo.insert_many(FBL_records_dict)
     client.close()
@@ -284,13 +284,5 @@ def opentomongo():
     print('success insert the FBL info to New_db')
 
 
-#def dojob():
-#   scheduler = BlockingScheduler()
-#   scheduler.add_job(opentomongo, 'interval', seconds=600, id='insertData&CalculateElo')
-#   scheduler.start()
-
-
-#dojob()
-
-
-opentomongo()
+while True:
+    opentomongo()
