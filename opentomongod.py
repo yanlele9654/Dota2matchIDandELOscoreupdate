@@ -11,7 +11,7 @@ def opentomongo():
     db_eng_1 = DBA.DbInfoGenerator('vpgame').info
     db_eng_2 = DBA.DbInfoGenerator('model_builder').info
     # 连接到本地库
-    client = pymongo.MongoClient("dds-bp1f5b9c442b9524-pub.mongodb.rds.aliyuncs.com", 3717)
+    client = pymongo.MongoClient(db_eng_1['host'], 7974)
     Newclient = pymongo.MongoClient(db_eng_2['host'], 27017)
 
     # 连接database'damin'

@@ -45,7 +45,7 @@ db_link_info = [
      },
     {'user': 'root',
      'password': 'VPGame%2019Hz',
-     'host': 'dds-bp1f5b9c442b9524-pub.mongodb.rds.aliyuncs.com'
+     'host': '121.41.79.9'
      },
     {'user':'model_builder',
      'password':'vpgame2020',
