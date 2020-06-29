@@ -12,7 +12,7 @@ def opentomongo():
     db_eng_2 = DBA.DbInfoGenerator('model_builder').info
     # 连接到本地库
     client = pymongo.MongoClient(db_eng_1['host'], 7974)
-    Newclient = pymongo.MongoClient(db_eng_2['host'], 27017)
+    #    Newclient = pymongo.MongoClient(db_eng_2['host'], 27017)
 
     # 连接database'damin'
     db = client['admin']
@@ -81,6 +81,9 @@ def opentomongo():
         {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
     dota_players_2020 = pd.DataFrame(list(db.players_2020.find(
         {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
+    dota_players_2018.to_csv('players_2018_info.csv')
+    dota_players_2019.to_csv('players_2019_info.csv')
+
     dota_players_total = dota_players_2019.append(dota_players_2020)
     dota_players_total = dota_players_total.append(dota_players_2018)
     dota_players_total = dota_players_total.sort_values(by=['start_time', 'match_id'])
@@ -122,32 +125,32 @@ def opentomongo():
     Winer_players = Winer_players.T
     Winer_players.columns = ['match_id', 'W_account', 'L_account']
 
-    dota_stats = list(db.dota_basic_data_2019.find({}, {
+    dota_stats1 = pd.DataFrame(list(db.dota_basic_data_2019.find({}, {
         'radiant_team.team_id': 1, 'dire_team.team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
-        'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1}))
-    dota_stats_old = list(db.dota_basic_data_2018.find({}, {
+        'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
+    dota_stats2 = pd.DataFrame(list(db.dota_basic_data_2018.find({}, {
         'radiant_team.team_id': 1, 'dire_team.team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
-        'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1}))
-    dota_stats_new = list(db.dota_basic_data_2020.find({}, {
+        'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
+    dota_stats3 = pd.DataFrame(list(db.dota_basic_data_2020.find({}, {
         'radiant_team.team_id': 1, 'dire_team.team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
-        'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1}))
+        'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
     print('success get the match info')
-
+    dota_stats1.to_csv('match_2019_info.csv')
+    dota_stats2.to_csv('match_2018_info.csv')
     # 提取FBL_info
     FirstBlood_info_df = pd.DataFrame(list(db.FirstBlood.find({}, {'_id': 0})))
     FirstBlood_info_df['match_id'] = FirstBlood_info_df['match_id'].astype('int')
     print('success get the FBL info')
     # client.close()
     print('disconnet to the vp database')
+    '''
     # 连接database'damin'
     New_db = Newclient['admin']
     # 'admin'的账号密码
     New_db.authenticate(db_eng_2['user'], db_eng_2['password'])
     print('success connet the model_builder database')
+    '''
 
-    dota_stats1 = pd.DataFrame(dota_stats)
-    dota_stats2 = pd.DataFrame(dota_stats_old)
-    dota_stats3 = pd.DataFrame(dota_stats_new)
     dota_stats1 = dota_stats1.append(dota_stats3)
     dota_stats1 = dota_stats1.append(dota_stats2)
     dota_stats1 = dota_stats1.dropna(axis=0, how='any')
@@ -272,6 +275,7 @@ def opentomongo():
     db.player_Team_elo.drop()
     db.player_Team_elo.insert_many(records1)
     print('success insert the new Elo score to db')
+    '''
     New_db.player_Team_elo.drop()
     New_db.player_Team_elo.insert_many(records1)
     print('success insert the new Elo score to New_db')
@@ -279,9 +283,12 @@ def opentomongo():
     FBL_records_dict = FBL_stats_win.FBL_stats_win_cal(FBL_Match_Total_df)
     New_db.FBL_Team_elo.drop()
     New_db.FBL_Team_elo.insert_many(FBL_records_dict)
+    '''
     client.close()
+    '''
     Newclient.close()
-    print('success insert the FBL info to New_db')
+    print('success insert the FBL info to New_db')  
+    '''
 
 
 while True:
