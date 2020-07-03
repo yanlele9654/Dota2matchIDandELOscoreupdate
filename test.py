@@ -2,8 +2,7 @@
 # -*- coding: UTF-8 -*-
 import pandas as pd
 import pymongo
-from apscheduler.schedulers.blocking import BlockingScheduler
-
+import time
 import DataBaseAccess_c as DBA
 import dota2_api
 
@@ -77,3 +76,4 @@ def opentomongo():
 
 while True:
     opentomongo()
+    time.sleep(2000)
