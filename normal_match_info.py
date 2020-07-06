@@ -27,8 +27,9 @@ def normal_match_insert(ids):
             print("当前线程：", threading.currentThread().name, "----", 'success insert match_id', i)
 
 
-def thread_num(total, num):  # 传参是打印数字的总数及线程数
-    data = [x for x in range(4807228541, total + 4807228541)]  # 所有的数字循环放入list
+def thread_num(Start_match_id,End_match_id, num):  # 传参是打印数字的总数及线程数
+    total=End_match_id-Start_match_id
+    data = [x for x in range(Start_match_id, End_match_id)]  # 所有的数字循环放入list
     split_data = [data[i: i + int(total / num)] for i in
                   range(0, len(data), int(total / num))]  # 带步长的循环list，且每段放入一个list，生成2维数组
     print(len(split_data))
@@ -41,5 +42,3 @@ def thread_num(total, num):  # 传参是打印数字的总数及线程数
 
 
 thread_num(1000000, 100)  # 调用线程方法
-# %%
-# func(range(19))
