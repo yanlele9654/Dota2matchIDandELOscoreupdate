@@ -5,8 +5,9 @@ import pymongo
 import time
 import DataBaseAccess_c as DBA
 import dota2_api
+#%%
 
-
+#%%
 def opentomongo():
     db_eng_2 = DBA.DbInfoGenerator('vpgame').info
     # 连接到本地库
@@ -18,24 +19,9 @@ def opentomongo():
     # 'admin'的账号密码
     print('success connet the database')
 
-    # sql语句建立查询
-    sql = """
-    SELECT
-    matches.match_id,
-    matches.start_time
-    FROM matches
-    JOIN match_patch using(match_id)
-    WHERE TRUE
-    AND matches.start_time between extract(epoch from timestamp '2020-01-01T00:00:00.000Z')
-    and extract(epoch from timestamp '2021-01-01T00:00:00.000Z')
-    """
 
     # 查询对应的比赛id并且建立list
-
-    match_ids = dota2_api.get_api_json(
-        'https://api.opendota.com/api/explorer?sql={}'.format(sql))['rows']
-
-    print(len(match_ids))
+    pro_match_info=dota2_api.get_api_json('https://api.opendota.com/api/proMatches?ccdc7024-3890-44dd-b602-ec193dee6f23')
 
     dota_match = list(New_db.dota_basic_data_2020.find({}, {'_id': 0, 'match_id': 1}))
     dota_match = pd.DataFrame(dota_match)
@@ -46,11 +32,10 @@ def opentomongo():
            ) != 0:
         match_list_haven = list(dota_match['match_id'])
     # 查看还需要插入的比赛场次
-    print(len(match_ids) - len(dota_match))
 
     # 对于以及在数据库的比赛进行筛选
     m = 0
-    for mi in match_ids:
+    for mi in pro_match_info:
         # print(mi['match_id'])
         if mi['match_id'] not in match_list_haven:
             match_info = dota2_api.get_api_json(
@@ -68,6 +53,7 @@ def opentomongo():
                     for j in range(len(data1[i]['players'])):
                         player_info = data1[i]['players'][j]
                         New_db.players_2020.insert_one(player_info)
+
     print('success insert data ready to calculate the elo')
 
     # 关闭服务器
@@ -76,4 +62,4 @@ def opentomongo():
 
 while True:
     opentomongo()
-    time.sleep(2000)
+    time.sleep(3600)
