@@ -32,8 +32,7 @@ if len(player_info
        ) != 0:
     match_list_haven = list(player_info['match_id'])
 # 对于以及在数据库的比赛进行筛选
-#%%
-dota_match['match_id']
+
 #%%
 m = 0
 for mi in dota_match:
@@ -41,7 +40,7 @@ for mi in dota_match:
     if mi not in match_list_haven:
         data1 = list(New_db.match_data_2019_2020.find(
             {'match_id': mi['match_id']}, {'_id': 0, 'players': 1}))
-        print('ready to insert')
+        print('ready to insert match_id is %d' %(mi['match_id']))
         for i in range(len(data1)):
             if 'players' in data1[i].keys():
                 for j in range(len(data1[i]['players'])):
