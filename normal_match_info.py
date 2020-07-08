@@ -44,3 +44,5 @@ def thread_num(Start_match_id,End_match_id, num):  # 传参是打印数字的总
 
 thread_num(4908228611,4998228611, 10000)  #调用线程方法
 
+MatchIdValidListdf=pd.DataFrame(MatchIdValidList)
+MatchIdValidListdf.to_csv('MatchIdValidList.csv')
