@@ -5,14 +5,13 @@ import pymongo
 import _thread
 import DataBaseAccess_c as DBA
 
-db_eng_1 = DBA.DbInfoGenerator('model_builder').info
-client = pymongo.MongoClient(db_eng_1['host'], 27017)
-# 连接database'damin'
-db = client['admin']
-# 'admin'的账号密码
-db.authenticate(db_eng_1['user'], db_eng_1['password'])
-
-
+# db_eng_1 = DBA.DbInfoGenerator('model_builder').info
+# client = pymongo.MongoClient(db_eng_1['host'], 27017)
+# # 连接database'damin'
+# db = client['admin']
+# # 'admin'的账号密码
+# db.authenticate(db_eng_1['user'], db_eng_1['password'])
+MatchIdValidList=[]
 # %%
 def normal_match_insert(ids):
     for i in ids:
@@ -20,12 +19,14 @@ def normal_match_insert(ids):
             'https://api.opendota.com/api/matches/{}?ccdc7024-3890-44dd-b602-ec193dee6f23'.format(i))
         if len(match_info) < 10:
         # i+=1
-            print("当前线程：", threading.currentThread().name, "----", i, 'this match not found')
+            #print("当前线程：", threading.currentThread().name, "----", i, 'this match not found')
+            continue
         else:
-            db.Normal_matches_total_info.insert_one(match_info)
+            #db.Normal_matches_total_info.insert_one(match_info)
         # i+=1
-            print("当前线程：", threading.currentThread().name, "----", 'success insert match_id', i)
-
+            MatchIdValidList.append(i)
+            #print("当前线程：", threading.currentThread().name, "----", 'success insert match_id', i)
+            #print(len(MatchIdValidList))
 
 def thread_num(Start_match_id,End_match_id, num):  # 传参是打印数字的总数及线程数
     total=End_match_id-Start_match_id
@@ -41,4 +42,7 @@ def thread_num(Start_match_id,End_match_id, num):  # 传参是打印数字的总
         pass
 
 
-thread_num(1000000, 100)  # 调用线程方法
+thread_num(4908228611,4998228611, 10000)  #调用线程方法
+
+MatchIdValidListdf=pd.DataFrame(MatchIdValidList)
+MatchIdValidListdf.to_csv('MatchIdValidList.csv')
