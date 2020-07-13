@@ -40,8 +40,6 @@ match_result_BO1 = match_result[match_result.format == 'bo1']
 match_result_BO3 = match_result[match_result.format == 'bo3']
 match_result_BO5 = match_result[match_result.format == 'bo5']
 # %%
-match_result_BO1.to_csv('CSGO_BO1_result.csv')
-# %%
 match_result_BO3 = match_result_BO3.reset_index(drop=True)
 for i in range(len(match_result_BO3)):
     if match_result_BO3['team1_result'][i] > match_result_BO3['team2_result'][i]:
