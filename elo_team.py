@@ -506,3 +506,51 @@ class elo_team:
                 result.append(0)
         data_total_info['result']=result
         return(data_total_info)
+
+    def CSGO_team_elo_constant_elo(self,Major_chongqing_major_Elo, k_score =16):
+        dota_team_id=set(list(Major_chongqing_major_Elo.W_id)+list(Major_chongqing_major_Elo.L_id))
+        n_teams = len(dota_team_id)
+        mean_elo=1000
+        current_elos = np.ones(shape=(n_teams))*mean_elo
+        current_count = np.zeros(n_teams)
+        last_start_time = np.zeros(shape=n_teams)
+        last_win_before = np.zeros(shape=(n_teams))
+        for row in Major_chongqing_major_Elo.itertuples():
+            diff = row.diff
+            idx = row.Index
+            w_id = row.W_team_id
+            l_id = row.L_team_id
+            start_time = row.date
+            w_elo_before = current_elos[w_id]
+            l_elo_before = current_elos[l_id]
+            w_team_times = current_count[w_id]
+            l_team_times = current_count[l_id]
+            w_team_last_start_time = last_start_time[w_id]
+            l_team_last_start_time = last_start_time[l_id]
+            # Update on game results
+            w_elo_after, l_elo_after = elo.update_elo_constant_k(w_elo_before, l_elo_before, k_score*diff)
+            w_team_times, l_team_times = w_team_times+1 ,l_team_times+1   # 计算出战队到最新打了多少次比赛
+            w_team_last_start_time, l_team_last_start_time = start_time, start_time
+            w_team_current, l_team_current = 1, 0
+            # Save updated elos
+            Major_chongqing_major_Elo.at[idx, 'w_elo_before_game'] = w_elo_before
+            Major_chongqing_major_Elo.at[idx, 'l_elo_before_game'] = l_elo_before
+            Major_chongqing_major_Elo.at[idx, 'w_elo_after_game'] = w_elo_after
+            Major_chongqing_major_Elo.at[idx, 'l_elo_after_game'] = l_elo_after
+            Major_chongqing_major_Elo.at[idx, 'w_team_times'] = w_team_times
+            Major_chongqing_major_Elo.at[idx, 'l_team_times'] = l_team_times
+            Major_chongqing_major_Elo.at[idx, 'w_team_last_start_time'] = last_start_time[w_id]
+            Major_chongqing_major_Elo.at[idx, 'l_team_last_start_time'] = last_start_time[l_id]
+            Major_chongqing_major_Elo.at[idx, 'w_team_before'] = last_win_before[w_id]
+            Major_chongqing_major_Elo.at[idx, 'l_team_before'] = last_win_before[l_id]
+            current_elos[w_id] = w_elo_after
+            current_elos[l_id] = l_elo_after
+            current_count[w_id] = w_team_times
+            current_count[l_id] = l_team_times
+            last_start_time[w_id] = w_team_last_start_time
+            last_start_time[l_id] = l_team_last_start_time
+            last_win_before[w_id] = w_team_current
+            last_win_before[l_id] = l_team_current
+
+
+        return(current_elos)
