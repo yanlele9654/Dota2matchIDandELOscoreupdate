@@ -180,7 +180,6 @@ def calcaulate_ELO():
 
     dota_team_id['elo_score'] = dota_stats1_elo
     dota_team_id['played_times'] = dota_stats1_counted
-    print(dota_team_id.loc[8077147])
     records1 = dota_team_id.to_dict('records')
     db.player_Team_elo.drop()
     db.player_Team_elo.insert_many(records1)
