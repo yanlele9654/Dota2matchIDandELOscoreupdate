@@ -187,7 +187,6 @@ def calcaulate_ELO():
     client.close()
     # %%
 
-# while True:
-#     calcaulate_ELO()
-#     # time.sleep(300)
-calcaulate_ELO()
+while True:
+    calcaulate_ELO()
+    time.sleep(300)
