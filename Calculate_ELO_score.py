@@ -1,6 +1,6 @@
 import pandas as pd
 import pymongo
-
+import time
 def team_id_match(Major_chongqing_major_Elo):
     dota_team_id = set(list(Major_chongqing_major_Elo.W_id) + list(Major_chongqing_major_Elo.L_id))
 
@@ -167,7 +167,7 @@ def calcaulate_ELO():
     import elo_player as elo_player
     elo_player = elo_player.elo_player()
 
-    dota_stats1_elo = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
+    dota_stats1_elo, dota_stats1_counted = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
     print('success calculator the new elo score')
     dota_team_id = set(list(dota_stats1.W_id) + list(dota_stats1.L_id))
     dota_team_id = pd.DataFrame(list(dota_team_id))
@@ -179,6 +179,7 @@ def calcaulate_ELO():
     dota_team_id.rename(columns={0: 'Team_id'}, inplace=True)
 
     dota_team_id['elo_score'] = dota_stats1_elo
+    dota_team_id['played_times'] = dota_stats1_counted
     print(dota_team_id.loc[8077147])
     records1 = dota_team_id.to_dict('records')
     db.player_Team_elo.drop()
@@ -186,5 +187,7 @@ def calcaulate_ELO():
     client.close()
     # %%
 
-while True:
-    calcaulate_ELO()
+# while True:
+#     calcaulate_ELO()
+#     # time.sleep(300)
+calcaulate_ELO()

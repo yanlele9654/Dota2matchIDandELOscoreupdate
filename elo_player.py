@@ -860,4 +860,4 @@ class elo_player():
             else:
                 result.append(0)
         data_total_info['result']=result
-        return(current_elos_team)
+        return(current_elos_team,current_count)
