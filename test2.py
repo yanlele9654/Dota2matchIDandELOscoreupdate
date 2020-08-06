@@ -1,45 +1,186 @@
-import threading
-import dota2_api
 import pandas as pd
 import pymongo
-import _thread
+
+
+def team_id_match(Major_chongqing_major_Elo):
+    dota_team_id = set(list(Major_chongqing_major_Elo.W_id) + list(Major_chongqing_major_Elo.L_id))
+
+    dota_team_id = pd.DataFrame(list(dota_team_id))
+
+    dota_team_id.index = dota_team_id[0]
+
+    dota_team_id['team_id'] = range(len(dota_team_id))
+
+    W_team_id = []
+    L_team_id = []
+    for i in range(len(Major_chongqing_major_Elo)):
+        W_team_id.append(dota_team_id['team_id'][Major_chongqing_major_Elo['W_id'][i]])
+        L_team_id.append(dota_team_id['team_id'][Major_chongqing_major_Elo['L_id'][i]])
+
+    Major_chongqing_major_Elo['W_team_id'] = W_team_id
+    Major_chongqing_major_Elo['L_team_id'] = L_team_id
+    return (Major_chongqing_major_Elo)
+
+
 import DataBaseAccess_c as DBA
 
-db_eng_1 = DBA.DbInfoGenerator('model_builder').info
-client = pymongo.MongoClient(db_eng_1['host'], 27017)
+db_eng_1 = DBA.DbInfoGenerator('vpgame').info
+client = pymongo.MongoClient(db_eng_1['host'], 7974)
 # 连接database'damin'
 db = client['admin']
 # 'admin'的账号密码
 db.authenticate(db_eng_1['user'], db_eng_1['password'])
+print('success connet the database')
+dota_players_2018 = pd.read_csv('players_2018_info.csv')
+dota_players_2019 = pd.read_csv('players_2019_info.csv')
+dota_players_2020 = pd.DataFrame(list(db.players_2020.find(
+    {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
+dota_players_total = dota_players_2019.append(dota_players_2020)
+dota_players_total = dota_players_total.append(dota_players_2018)
+dota_players_total = dota_players_total.sort_values(by=['start_time', 'match_id'])
+dota_players_total = dota_players_total.reset_index(drop=True)
+dota_players_total_win = dota_players_total[dota_players_total.win == 1]
+dota_players_total_win = dota_players_total_win.reset_index(drop=True)
+print('success get the player info')
+W_id = []
+W_account = []
+for i in range(len(dota_players_total_win) - 1):
+    if dota_players_total_win.match_id[i] == dota_players_total_win.match_id[i + 1]:
+        W_id.append(dota_players_total_win.account_id[i])
+    else:
+        W_id.append(dota_players_total_win.account_id[i])
+        W_account.append(W_id)
+        W_id = []
+dota_players_total_lose = dota_players_total[dota_players_total.win == 0]
 
+dota_players_total_lose = dota_players_total_lose.reset_index(drop=True)
+L_id = []
+L_account = []
+for i in range(len(dota_players_total_lose) - 1):
+    if dota_players_total_lose.match_id[i] == dota_players_total_lose.match_id[i + 1]:
+        L_id.append(dota_players_total_lose.account_id[i])
+    else:
+        L_id.append(dota_players_total_lose.account_id[i])
+        L_account.append(L_id)
+        L_id = []
 
+match_id = dota_players_total_win.groupby('match_id')['match_id'].head(1)
+match_id = match_id.reset_index(drop=True)
+match_id = match_id.drop(match_id.index[-1])
+match_id = list(match_id)
+
+Winer_players = pd.DataFrame([match_id, W_account, L_account])
+Winer_players = Winer_players.T
+Winer_players.columns = ['match_id', 'W_account', 'L_account']
+#%%
+dota_stats1 = pd.read_csv('match_2018_info.csv')
+dota_stats2 = pd.read_csv('match_2019_info.csv')
+#%%
+dota_stats3 = pd.DataFrame(list(db.dota_basic_data_2020.find({}, {
+    'radiant_team_id': 1, 'dire_team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
+    'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
+print('success get the match info')
+
+# 提取FBL_info
+
+dota_stats1 = dota_stats1.append(dota_stats3)
+dota_stats1 = dota_stats1.append(dota_stats2)
+#%%
+dota_stats1=dota_stats1.dropna(subset=['match_id'])
+dota_stats1[['match_id']] = dota_stats1[['match_id']].astype(int)
+#%%
+Winer_players['match_id'] = Winer_players['match_id'].astype(int)
+dota_stats1 = pd.merge(Winer_players, dota_stats1, how="inner", on='match_id')
+#%%
+import itertools
+
+W_team_players = list(itertools.chain.from_iterable(list(dota_stats1.W_account)))
+L_team_players = list(itertools.chain.from_iterable(list(dota_stats1.L_account)))
+W_team_players = list(map(lambda x: int(x), W_team_players))
+L_team_players = list(map(lambda x: int(x), L_team_players))
+total_players_id = pd.DataFrame(list(set(W_team_players + L_team_players)))
+total_players_id.index = total_players_id[0]
+total_players_id['players_id'] = range(len(total_players_id))
+dota_stats1 = dota_stats1.dropna(subset=['duration', 'dire_team_id', 'radiant_team_id'])
+dota_stats1 = dota_stats1.reset_index(drop=True)
+
+W_player_1 = []
+L_player_1 = []
+W_player_2 = []
+L_player_2 = []
+W_player_3 = []
+L_player_3 = []
+W_player_4 = []
+L_player_4 = []
+W_player_5 = []
+L_player_5 = []
+
+for i in range(len(dota_stats1)):
+    W_player_1.append(total_players_id['players_id'][dota_stats1['W_account'][i][0]])
+    L_player_1.append(total_players_id['players_id'][dota_stats1['L_account'][i][0]])
+    W_player_2.append(total_players_id['players_id'][dota_stats1['W_account'][i][1]])
+    L_player_2.append(total_players_id['players_id'][dota_stats1['L_account'][i][1]])
+    W_player_3.append(total_players_id['players_id'][dota_stats1['W_account'][i][2]])
+    L_player_3.append(total_players_id['players_id'][dota_stats1['L_account'][i][2]])
+    W_player_4.append(total_players_id['players_id'][dota_stats1['W_account'][i][3]])
+    L_player_4.append(total_players_id['players_id'][dota_stats1['L_account'][i][3]])
+    W_player_5.append(total_players_id['players_id'][dota_stats1['W_account'][i][4]])
+    L_player_5.append(total_players_id['players_id'][dota_stats1['L_account'][i][4]])
+dota_stats1['W_players_1'] = W_player_1
+dota_stats1['L_players_1'] = L_player_1
+dota_stats1['W_players_2'] = W_player_2
+dota_stats1['L_players_2'] = L_player_2
+dota_stats1['W_players_3'] = W_player_3
+dota_stats1['L_players_3'] = L_player_3
+dota_stats1['W_players_4'] = W_player_4
+dota_stats1['L_players_4'] = L_player_4
+dota_stats1['W_players_5'] = W_player_5
+dota_stats1['L_players_5'] = L_player_5
+
+dota_stats1.sort_values(by=['start_time'], inplace=True)
 # %%
-def normal_match_insert(ids):
-    for i in ids:
-        match_info = dota2_api.get_api_json(
-            'https://api.opendota.com/api/matches/{}?ccdc7024-3890-44dd-b602-ec193dee6f23'.format(i))
-        if len(match_info) < 10:
-        # i+=1
-            print("当前线程：", threading.currentThread().name, "----", i, 'this match not found')
-        else:
-            db.Normal_matches_total_info.insert_one(match_info)
-        # i+=1
-            print("当前线程：", threading.currentThread().name, "----", 'success insert match_id', i)
+dire_team_id = []
+radiant_team_id = []
+for row in dota_stats1.itertuples():
+    dire_team_id.append(row.dire_team_id)
+    radiant_team_id.append(row.radiant_team_id)
+dota_stats1['dire_team'] = dire_team_id
+dota_stats1['radiant_team'] = radiant_team_id
 
+## ELO评分team
+dota_stats1 = dota_stats1.reset_index(drop=True)
+W_id = []
+L_id = []
+League_tier = []
+for i in range(len(dota_stats1)):
+    #    League_tier.append(dota_stats1['league'][i]['tier'])
+    if dota_stats1['radiant_win'][i] == 0:
+        W_id.append(int(dota_stats1['dire_team'][i]))
+        L_id.append(int(dota_stats1['radiant_team'][i]))
+    else:
+        W_id.append(int(dota_stats1['radiant_team'][i]))
+        L_id.append(int(dota_stats1['dire_team'][i]))
+dota_stats1['W_id'] = W_id
+dota_stats1['L_id'] = L_id
 
-def thread_num(total, num):  # 传参是打印数字的总数及线程数
-    data = [x for x in range(4807228541, total + 4807228541)]  # 所有的数字循环放入list
-    split_data = [data[i: i + int(total / num)] for i in
-                  range(0, len(data), int(total / num))]  # 带步长的循环list，且每段放入一个list，生成2维数组
-    print(len(split_data))
-    for d in split_data:  # 循环二维数组，每次取一个数组，作为打印函数的传参
-        t = threading.Thread(target=normal_match_insert, args=(d,))  # 生成线程且调用方法及给予传参
-        t = t.start()  # 启动线程
+# dota_stats1['tier'] = League_tier
 
-    while threading.active_count() != 1:  # 等待子线程
-        pass
+dota_stats1 = team_id_match(dota_stats1)
+import elo_player as elo_player
 
+elo_player = elo_player.elo_player()
 
-thread_num(1000000, 100)  # 调用线程方法
+dota_stats1_elo = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
+print('success calculator the new elo score')
+dota_team_id = set(list(dota_stats1.W_id) + list(dota_stats1.L_id))
+dota_team_id = pd.DataFrame(list(dota_team_id))
+
+dota_team_id.index = dota_team_id[0]
+
+dota_team_id['team_id'] = range(len(dota_team_id))
+
+dota_team_id.rename(columns={0: 'Team_id'}, inplace=True)
+
+dota_team_id['elo_score'] = dota_stats1_elo
 # %%
-# func(range(19))
+print(dota_stats1[dota_stats1['match_id']==5549103858])

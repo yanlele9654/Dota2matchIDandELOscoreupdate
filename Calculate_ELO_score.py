@@ -74,23 +74,17 @@ def calcaulate_ELO():
     Winer_players = Winer_players.T
     Winer_players.columns = ['match_id', 'W_account', 'L_account']
 
-    dota_stats1 = pd.DataFrame(list(db.dota_basic_data_2019.find({}, {
-        'radiant_team.team_id': 1, 'dire_team.team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
-        'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
-    dota_stats2 = pd.DataFrame(list(db.dota_basic_data_2018.find({}, {
-        'radiant_team.team_id': 1, 'dire_team.team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
-        'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
+    dota_stats1 = pd.read_csv('match_2018_info.csv')
+    dota_stats2 = pd.read_csv('match_2019_info.csv')
     dota_stats3 = pd.DataFrame(list(db.dota_basic_data_2020.find({}, {
-        'radiant_team.team_id': 1, 'dire_team.team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
+        'radiant_team_id': 1, 'dire_team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
         'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
     print('success get the match info')
 
-    # 提取FBL_info
-    FirstBlood_info_df = pd.DataFrame(list(db.FirstBlood.find({}, {'_id': 0})))
-    FirstBlood_info_df['match_id'] = FirstBlood_info_df['match_id'].astype('int')
+
     dota_stats1 = dota_stats1.append(dota_stats3)
     dota_stats1 = dota_stats1.append(dota_stats2)
-    dota_stats1 = dota_stats1.dropna(axis=0, how='any')
+    dota_stats1 = dota_stats1.dropna(subset=['match_id'])
     dota_stats1[['match_id']] = dota_stats1[['match_id']].astype(int)
     Winer_players['match_id'] = Winer_players['match_id'].astype(int)
     dota_stats1 = pd.merge(Winer_players, dota_stats1, how="inner", on='match_id')
@@ -104,7 +98,7 @@ def calcaulate_ELO():
     total_players_id = pd.DataFrame(list(set(W_team_players + L_team_players)))
     total_players_id.index = total_players_id[0]
     total_players_id['players_id'] = range(len(total_players_id))
-    dota_stats1 = dota_stats1.dropna(subset=['duration', 'dire_team', 'radiant_team'])
+    dota_stats1 = dota_stats1.dropna(subset=['duration', 'dire_team_id', 'radiant_team_id'])
     dota_stats1 = dota_stats1.reset_index(drop=True)
 
     W_player_1 = []
@@ -145,13 +139,11 @@ def calcaulate_ELO():
     dire_team_id = []
     radiant_team_id = []
     for row in dota_stats1.itertuples():
-        dire_team_id.append(str(row.dire_team['team_id']))  # 在转换的时候把整个dire_team当作一个string的类型了
-        radiant_team_id.append(str(row.radiant_team['team_id']))
+        dire_team_id.append(row.dire_team_id)  # 在转换的时候把整个dire_team当作一个string的类型了
+        radiant_team_id.append(row.radiant_team_id)
     dota_stats1['dire_team'] = dire_team_id
     dota_stats1['radiant_team'] = radiant_team_id
-    FBL_Match_info = dota_stats1[['match_id', 'dire_team', 'radiant_team']]
-    FBL_Match_info = FBL_Match_info.rename(columns={'dire_team': 'dire_team_id', 'radiant_team': 'radiant_team_id'})
-    FBL_Match_Total_df = FBL_Match_info.merge(FirstBlood_info_df, on='match_id')
+
 
     ## ELO评分team
     dota_stats1 = dota_stats1.reset_index(drop=True)
@@ -187,7 +179,7 @@ def calcaulate_ELO():
     dota_team_id.rename(columns={0: 'Team_id'}, inplace=True)
 
     dota_team_id['elo_score'] = dota_stats1_elo
-
+    print(dota_team_id.loc[8077147])
     records1 = dota_team_id.to_dict('records')
     db.player_Team_elo.drop()
     db.player_Team_elo.insert_many(records1)
