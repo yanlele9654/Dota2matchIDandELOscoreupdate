@@ -553,4 +553,4 @@ class elo_team:
             last_win_before[l_id] = l_team_current
 
 
-        return(current_elos)
+        return(current_elos,current_count)

@@ -116,7 +116,7 @@ match_result_total = match_result_total.reset_index(drop=True)
 match_result_total_elo = team_id_match(match_result_total)
 elo_team = elo_team.elo_team()
 # %%
-CSGO_ELO_match_result_total_score = elo_team.CSGO_team_elo_constant_elo(match_result_total_elo)
+CSGO_ELO_match_result_total_score, CSGO_ELO_team_played_count = elo_team.CSGO_team_elo_constant_elo(match_result_total_elo)
 
 CSGO_team_id = set(list(match_result_total_elo.W_id) + list(match_result_total_elo.L_id))
 CSGO_team_id = pd.DataFrame(list(CSGO_team_id))
@@ -128,6 +128,7 @@ CSGO_team_id['team_id'] = range(len(CSGO_team_id))
 CSGO_team_id.rename(columns={0: 'Team_id'}, inplace=True)
 
 CSGO_team_id['elo_score'] = CSGO_ELO_match_result_total_score
+CSGO_team_id['team_times'] = CSGO_ELO_team_played_count
 
 records1 = CSGO_team_id.to_dict('records')
 match_db.CSGO_Team_elo.drop()
