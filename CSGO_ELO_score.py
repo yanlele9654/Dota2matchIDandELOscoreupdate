@@ -60,7 +60,8 @@ for i in range(len(match_result_BO3)):
     elif match_result_BO3['team2_result'][i] > match_result_BO3['team1_result'][i]:
         win_team = match_result_BO3['team2'][i]
         lose_team = match_result_BO3['team1'][i]
-    match_result_BO3.at[i, 'diff'] = abs(int(match_result_BO3['team1_result'][i])-int(match_result_BO3['team2_result'][i]))
+    match_result_BO3.at[i, 'diff'] = abs(
+        int(match_result_BO3['team1_result'][i]) - int(match_result_BO3['team2_result'][i]))
     match_result_BO3.at[i, 'W_id'] = win_team
     match_result_BO3.at[i, 'L_id'] = lose_team
 for i in range(len(match_result_BO5)):
@@ -70,7 +71,8 @@ for i in range(len(match_result_BO5)):
     elif match_result_BO5['team2_result'][i] > match_result_BO5['team1_result'][i]:
         win_team = match_result_BO5['team2'][i]
         lose_team = match_result_BO5['team1'][i]
-    match_result_BO5.at[i, 'diff'] = abs(int(match_result_BO5['team1_result'][i])-int(match_result_BO5['team2_result'][i]))
+    match_result_BO5.at[i, 'diff'] = abs(
+        int(match_result_BO5['team1_result'][i]) - int(match_result_BO5['team2_result'][i]))
     match_result_BO5.at[i, 'W_id'] = win_team
     match_result_BO5.at[i, 'L_id'] = lose_team
 for i in range(len(match_result_BO1)):
@@ -111,12 +113,14 @@ def team_id_match(Major_chongqing_major_Elo):
 
 # %%
 match_result_total = match_result_total.sort_values(by='date', ascending='True')
+match_result_total = match_result_total.dropna(subset=['W_id', 'L_id'])
 match_result_total = match_result_total.reset_index(drop=True)
 # %%
 match_result_total_elo = team_id_match(match_result_total)
 elo_team = elo_team.elo_team()
 # %%
-CSGO_ELO_match_result_total_score, CSGO_ELO_team_played_count = elo_team.CSGO_team_elo_constant_elo(match_result_total_elo)
+CSGO_ELO_match_result_total_score, CSGO_ELO_team_played_count = elo_team.CSGO_team_elo_constant_elo(
+    match_result_total_elo)
 
 CSGO_team_id = set(list(match_result_total_elo.W_id) + list(match_result_total_elo.L_id))
 CSGO_team_id = pd.DataFrame(list(CSGO_team_id))
