@@ -74,7 +74,7 @@ def opentomongo():
 
     # 关闭服务器
     # 关闭服务器
-
+'''
     dota_players_2019 = pd.DataFrame(list(db.players_2019.find(
         {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
     dota_players_2018 = pd.DataFrame(list(db.players_2018.find(
@@ -144,12 +144,13 @@ def opentomongo():
     # client.close()
     print('disconnet to the vp database')
     '''
+'''
     # 连接database'damin'
     New_db = Newclient['admin']
     # 'admin'的账号密码
     New_db.authenticate(db_eng_2['user'], db_eng_2['password'])
     print('success connet the model_builder database')
-    '''
+
 
     dota_stats1 = dota_stats1.append(dota_stats3)
     dota_stats1 = dota_stats1.append(dota_stats2)
@@ -275,7 +276,6 @@ def opentomongo():
     db.player_Team_elo.drop()
     db.player_Team_elo.insert_many(records1)
     print('success insert the new Elo score to db')
-    '''
     New_db.player_Team_elo.drop()
     New_db.player_Team_elo.insert_many(records1)
     print('success insert the new Elo score to New_db')
@@ -283,9 +283,9 @@ def opentomongo():
     FBL_records_dict = FBL_stats_win.FBL_stats_win_cal(FBL_Match_Total_df)
     New_db.FBL_Team_elo.drop()
     New_db.FBL_Team_elo.insert_many(FBL_records_dict)
-    '''
+    
     client.close()
-    '''
+    
     Newclient.close()
     print('success insert the FBL info to New_db')  
     '''

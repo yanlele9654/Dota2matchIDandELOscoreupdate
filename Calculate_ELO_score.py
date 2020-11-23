@@ -149,7 +149,7 @@ def calcaulate_ELO():
     dota_stats1 = dota_stats1.reset_index(drop=True)
     W_id = []
     L_id = []
-    League_tier = []
+#    League_tier = []
     for i in range(len(dota_stats1)):
         #    League_tier.append(dota_stats1['league'][i]['tier'])
         if dota_stats1['radiant_win'][i] == 0:
@@ -167,7 +167,7 @@ def calcaulate_ELO():
     import elo_player as elo_player
     elo_player = elo_player.elo_player()
 
-    dota_stats1_elo, dota_stats1_counted = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
+    dota_stats1_elo, dota_stats1_counted, current_team_change, one_month_played_times = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
     print('success calculator the new elo score')
     dota_team_id = set(list(dota_stats1.W_id) + list(dota_stats1.L_id))
     dota_team_id = pd.DataFrame(list(dota_team_id))
