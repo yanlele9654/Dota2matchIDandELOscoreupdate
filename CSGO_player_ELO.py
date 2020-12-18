@@ -1,7 +1,6 @@
 import pandas as pd
 import pymongo
-import time
-
+import DataBaseAccess_c as DBA 
 
 def team_id_match(Major_chongqing_major_Elo):
     dota_team_id = set(list(Major_chongqing_major_Elo.W_id) + list(Major_chongqing_major_Elo.L_id))
@@ -22,9 +21,6 @@ def team_id_match(Major_chongqing_major_Elo):
     Major_chongqing_major_Elo['L_team_id'] = L_team_id
     return (Major_chongqing_major_Elo)
 
-
-import DataBaseAccess_c as DBA
-
 db_eng_1 = DBA.DbInfoGenerator('vpgame').info
 client = pymongo.MongoClient(db_eng_1['host'], 7974)
 # 连接database'damin'
@@ -32,14 +28,11 @@ db = client['admin']
 # 'admin'的账号密码
 db.authenticate(db_eng_1['user'], db_eng_1['password'])
 print('success connet the database')
-dota_players_2018 = pd.read_csv('players_2018_info.csv')
-dota_players_2019 = pd.read_csv('players_2019_info.csv')
-dota_players_2020 = pd.DataFrame(list(db.players_2020.find(
-    {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
-dota_players_total = dota_players_2019.append(dota_players_2020)
-dota_players_total = dota_players_total.append(dota_players_2018)
-dota_players_total = dota_players_total.sort_values(by=['start_time', 'match_id'])
-dota_players_total = dota_players_total.reset_index(drop=True)
+csgo_players_info = pd.DataFrame(list(db.players_2020.find(
+    {}, {"match_id": 1, "name": 1, '_id': 0, 'team_id':1})))
+
+# 提取出csgo比赛数据结果，然后通过BO3,BO5,BO1,BO2等多个比赛进行分组，整体来说将player与比赛结果相匹配，整体的做法与CSGO_ELO_score相类似，可以参考Calculate_ELO_score来完成，整体的数据架构比较负责，可能需要结合多个mongodb的数据表来完成任务。
+
 dota_players_total_win = dota_players_total[dota_players_total.win == 1]
 dota_players_total_win = dota_players_total_win.reset_index(drop=True)
 print('success get the player info')
@@ -80,6 +73,7 @@ dota_stats3 = pd.DataFrame(list(db.dota_basic_data_2020.find({}, {
     'radiant_team_id': 1, 'dire_team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
     'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
 print('success get the match info')
+
 
 dota_stats1 = dota_stats1.append(dota_stats3)
 dota_stats1 = dota_stats1.append(dota_stats2)
@@ -142,75 +136,3 @@ for row in dota_stats1.itertuples():
     radiant_team_id.append(row.radiant_team_id)
 dota_stats1['dire_team'] = dire_team_id
 dota_stats1['radiant_team'] = radiant_team_id
-
-## ELO评分team
-dota_stats1 = dota_stats1.reset_index(drop=True)
-W_id = []
-L_id = []
-League_tier = []
-for i in range(len(dota_stats1)):
-    #    League_tier.append(dota_stats1['league'][i]['tier'])
-    if dota_stats1['radiant_win'][i] == 0:
-        W_id.append(int(dota_stats1['dire_team'][i]))
-        L_id.append(int(dota_stats1['radiant_team'][i]))
-    else:
-        W_id.append(int(dota_stats1['radiant_team'][i]))
-        L_id.append(int(dota_stats1['dire_team'][i]))
-dota_stats1['W_id'] = W_id
-dota_stats1['L_id'] = L_id
-
-# dota_stats1['tier'] = League_tier
-# %%
-dota_stats1 = team_id_match(dota_stats1)
-import elo_player as elo_player
-from imp import reload
-
-reload(elo_player)
-elo_player = elo_player.elo_player()
-# %%
-dota_stats1_elo, dota_stats1_counted, current_team_change, one_month_played_times = elo_player.player_team_elo_result(
-    dota_stats1,
-    total_players_id, 16)
-print('success calculator the new elo score')
-dota_team_id = set(list(dota_stats1.W_id) + list(dota_stats1.L_id))
-dota_team_id = pd.DataFrame(list(dota_team_id))
-
-dota_team_id.index = dota_team_id[0]
-
-dota_team_id['team_id'] = range(len(dota_team_id))
-
-dota_team_id.rename(columns={0: 'Team_id'}, inplace=True)
-
-dota_team_id['elo_score'] = dota_stats1_elo
-dota_team_id['played_times'] = dota_stats1_counted
-dota_team_id['last_change'] = current_team_change
-dota_team_id['one_month_played'] = one_month_played_times
-records1 = dota_team_id.to_dict('records')
-db.ELO_Value_Betting.drop()
-db.ELO_Value_Betting.insert_many(records1)
-# %%
-target_team_id = 15
-result_test = \
-    dota_stats1[(dota_stats1['dire_team_id'] == target_team_id) | (dota_stats1['radiant_team'] == target_team_id)][
-        ['start_time', 'W_account', 'L_account']]
-# %%
-now = int(time.time())
-Three_Month = now - 2592000 * 3
-# %%
-Three_Month_data_info = dota_stats1[dota_stats1['start_time'] >= Three_Month]
-Three_Month_data_info = Three_Month_data_info[['dire_team_id', 'radiant_team_id', 'start_time']]
-# %%
-records2 = Three_Month_data_info.to_dict('records')
-db.Three_Month_dota_data.drop()
-db.Three_Month_dota_data.insert_many(records2)
-client.close()
-# %%
-dota_stats1_test_CDEC = dota_stats1[
-    (dota_stats1['dire_team_id'] == 1520578) | (dota_stats1['radiant_team_id'] == 1520578)]
-import numpy as np
-
-print(np.mean(dota_stats1['result_player']))
-print(np.mean(dota_stats1['result_team']))
-# %%
-dota_stats1[['W_id', 'L_id', 'dire_team', 'radiant_team', 'match_id', 'win_predict_player', 'radiant_win']].to_csv(
-     'Elo_player_result_1202.csv')

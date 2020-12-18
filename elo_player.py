@@ -904,4 +904,4 @@ class elo_player():
                 result_player.append(0)
         data_total_info['result_team'] = result_team
         data_total_info['result_player'] = result_player
-        return (current_elos_combine, current_count, current_team_playes_time, one_month_team_played)
+        return (current_elos_combine, current_count, current_team_playes_time, one_month_team_played,current_elos_player)

@@ -190,7 +190,7 @@ def calcaulate_ELO():
     total_players_id=total_players_id.reset_index(drop=True)
     total_players_id.rename(columns={0:'account_id'},inplace=True)
     records_players = total_players_id.to_dict('records')
-    dota2_players_elo.drop()
+    db.dota2_players_elo.drop()
     db.dota2_players_elo.insert_many(records_players)
     client.close()
     # %%
