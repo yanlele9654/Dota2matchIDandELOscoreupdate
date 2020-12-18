@@ -167,7 +167,7 @@ def calcaulate_ELO():
     import elo_player as elo_player
     elo_player = elo_player.elo_player()
 
-    dota_stats1_elo, dota_stats1_counted, current_team_change, one_month_played_times = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
+    dota_stats1_elo, dota_stats1_counted, current_team_change, one_month_played_times, players_individual_elo = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
     print('success calculator the new elo score')
     dota_team_id = set(list(dota_stats1.W_id) + list(dota_stats1.L_id))
     dota_team_id = pd.DataFrame(list(dota_team_id))
@@ -185,9 +185,16 @@ def calcaulate_ELO():
     records1 = dota_team_id.to_dict('records')
     db.player_Team_elo.drop()
     db.player_Team_elo.insert_many(records1)
+    total_players_id['elo_score']=players_individual_elo
+    total_players_id=total_players_id.set_index(['players_id'])
+    total_players_id=total_players_id.reset_index(drop=True)
+    total_players_id.rename(columns={0:'account_id'},inplace=True)
+    records_players = total_players_id.to_dict('records')
+    dota2_players_elo.drop()
+    db.dota2_players_elo.insert_many(records_players)
     client.close()
     # %%
 
 while True:
     calcaulate_ELO()
-    time.sleep(300)
+    time.sleep(3600)
