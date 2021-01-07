@@ -1,7 +1,7 @@
+#%%
 import pandas as pd
 import pymongo
-
-
+import time
 def team_id_match(Major_chongqing_major_Elo):
     dota_team_id = set(list(Major_chongqing_major_Elo.W_id) + list(Major_chongqing_major_Elo.L_id))
 
@@ -23,6 +23,7 @@ def team_id_match(Major_chongqing_major_Elo):
 
 
 import DataBaseAccess_c as DBA
+
 
 db_eng_1 = DBA.DbInfoGenerator('vpgame').info
 client = pymongo.MongoClient(db_eng_1['host'], 7974)
@@ -72,26 +73,22 @@ match_id = list(match_id)
 Winer_players = pd.DataFrame([match_id, W_account, L_account])
 Winer_players = Winer_players.T
 Winer_players.columns = ['match_id', 'W_account', 'L_account']
-#%%
+
 dota_stats1 = pd.read_csv('match_2018_info.csv')
 dota_stats2 = pd.read_csv('match_2019_info.csv')
-#%%
 dota_stats3 = pd.DataFrame(list(db.dota_basic_data_2020.find({}, {
     'radiant_team_id': 1, 'dire_team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
     'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
 print('success get the match info')
 
-# 提取FBL_info
 
 dota_stats1 = dota_stats1.append(dota_stats3)
 dota_stats1 = dota_stats1.append(dota_stats2)
-#%%
-dota_stats1=dota_stats1.dropna(subset=['match_id'])
+dota_stats1 = dota_stats1.dropna(subset=['match_id'])
 dota_stats1[['match_id']] = dota_stats1[['match_id']].astype(int)
-#%%
 Winer_players['match_id'] = Winer_players['match_id'].astype(int)
 dota_stats1 = pd.merge(Winer_players, dota_stats1, how="inner", on='match_id')
-#%%
+
 import itertools
 
 W_team_players = list(itertools.chain.from_iterable(list(dota_stats1.W_account)))
@@ -138,20 +135,21 @@ dota_stats1['W_players_5'] = W_player_5
 dota_stats1['L_players_5'] = L_player_5
 
 dota_stats1.sort_values(by=['start_time'], inplace=True)
-# %%
+
 dire_team_id = []
 radiant_team_id = []
 for row in dota_stats1.itertuples():
-    dire_team_id.append(row.dire_team_id)
+    dire_team_id.append(row.dire_team_id)  # 在转换的时候把整个dire_team当作一个string的类型了
     radiant_team_id.append(row.radiant_team_id)
 dota_stats1['dire_team'] = dire_team_id
 dota_stats1['radiant_team'] = radiant_team_id
+
 
 ## ELO评分team
 dota_stats1 = dota_stats1.reset_index(drop=True)
 W_id = []
 L_id = []
-League_tier = []
+#    League_tier = []
 for i in range(len(dota_stats1)):
     #    League_tier.append(dota_stats1['league'][i]['tier'])
     if dota_stats1['radiant_win'][i] == 0:
@@ -164,13 +162,12 @@ dota_stats1['W_id'] = W_id
 dota_stats1['L_id'] = L_id
 
 # dota_stats1['tier'] = League_tier
-
+#%%
 dota_stats1 = team_id_match(dota_stats1)
 import elo_player as elo_player
-
 elo_player = elo_player.elo_player()
 
-dota_stats1_elo = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
+dota_stats1_elo, dota_stats1_counted, current_team_change, one_month_played_times, players_individual_elo, player_played_counted = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
 print('success calculator the new elo score')
 dota_team_id = set(list(dota_stats1.W_id) + list(dota_stats1.L_id))
 dota_team_id = pd.DataFrame(list(dota_team_id))
@@ -182,5 +179,20 @@ dota_team_id['team_id'] = range(len(dota_team_id))
 dota_team_id.rename(columns={0: 'Team_id'}, inplace=True)
 
 dota_team_id['elo_score'] = dota_stats1_elo
+dota_team_id['played_times'] = dota_stats1_counted
+dota_team_id['last_change'] = current_team_change
+dota_team_id['one_month_played'] = one_month_played_times
+records1 = dota_team_id.to_dict('records')
+
+total_players_id['elo_score']=players_individual_elo
+total_players_id['played_counted'] = player_played_counted
+total_players_id=total_players_id.set_index(['players_id'])
+total_players_id=total_players_id.reset_index(drop=True)
+total_players_id.rename(columns={0:'account_id'},inplace=True)
+records_players = total_players_id.to_dict('records')
+dota_stats1.to_csv('Dota_ELO_info_player_0104.csv ')
 # %%
-print(dota_stats1[dota_stats1['match_id']==5549103858])
+total_players_id = total_players_id[total_players_id['played_counted']>10]
+import matplotlib.pyplot as plt
+plt.hist(total_players_id['elo_score'], bins=100, rwidth=0.8, density=True)
+# %%

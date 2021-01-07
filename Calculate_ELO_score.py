@@ -34,10 +34,12 @@ def calcaulate_ELO():
     print('success connet the database')
     dota_players_2018 = pd.read_csv('players_2018_info.csv')
     dota_players_2019 = pd.read_csv('players_2019_info.csv')
-    dota_players_2020 = pd.DataFrame(list(db.players_2020.find(
+    dota_players_2020 = pd.read_csv('players_2020_info.csv')
+    dota_players_2021 = pd.DataFrame(list(db.players_2021.find(
         {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
     dota_players_total = dota_players_2019.append(dota_players_2020)
     dota_players_total = dota_players_total.append(dota_players_2018)
+    dota_players_total = dota_players_total.append(dota_players_2021)
     dota_players_total = dota_players_total.sort_values(by=['start_time', 'match_id'])
     dota_players_total = dota_players_total.reset_index(drop=True)
     dota_players_total_win = dota_players_total[dota_players_total.win == 1]
@@ -74,20 +76,24 @@ def calcaulate_ELO():
     Winer_players = Winer_players.T
     Winer_players.columns = ['match_id', 'W_account', 'L_account']
 
-    dota_stats1 = pd.read_csv('match_2018_info.csv')
-    dota_stats2 = pd.read_csv('match_2019_info.csv')
-    dota_stats3 = pd.DataFrame(list(db.dota_basic_data_2020.find({}, {
+    dota_match_2018 = pd.read_csv('match_2018_info.csv')
+    dota_match_2019 = pd.read_csv('match_2019_info.csv')
+    dota_match_2020 = pd.read_csv('match_2020_info.csv')
+    dota_match_2021 = pd.DataFrame(list(db.dota_basic_data_2021.find({}, {
         'radiant_team_id': 1, 'dire_team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
         'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
     print('success get the match info')
 
 
-    dota_stats1 = dota_stats1.append(dota_stats3)
-    dota_stats1 = dota_stats1.append(dota_stats2)
-    dota_stats1 = dota_stats1.dropna(subset=['match_id'])
-    dota_stats1[['match_id']] = dota_stats1[['match_id']].astype(int)
+    dota_match_total = dota_match_2018.append(dota_match_2019)
+    dota_match_total = dota_match_total.append(dota_match_2018)
+    dota_match_total = dota_match_total.append(dota_match_2020)
+    dota_match_total = dota_match_total.append(dota_match_2021)
+    dota_match_total = dota_match_total.sort_values(by=['start_time', 'match_id'])
+    dota_match_total = dota_match_total.dropna(subset=['match_id'])
+    dota_match_total[['match_id']] = dota_match_total[['match_id']].astype(int)
     Winer_players['match_id'] = Winer_players['match_id'].astype(int)
-    dota_stats1 = pd.merge(Winer_players, dota_stats1, how="inner", on='match_id')
+    dota_stats1 = pd.merge(Winer_players, dota_match_total, how="inner", on='match_id')
 
     import itertools
 
@@ -167,7 +173,7 @@ def calcaulate_ELO():
     import elo_player as elo_player
     elo_player = elo_player.elo_player()
 
-    dota_stats1_elo, dota_stats1_counted, current_team_change, one_month_played_times, players_individual_elo = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
+    dota_stats1_elo, dota_stats1_counted, current_team_change, one_month_played_times, players_individual_elo, player_played_counted = elo_player.player_team_elo_result(dota_stats1, total_players_id, 16)
     print('success calculator the new elo score')
     dota_team_id = set(list(dota_stats1.W_id) + list(dota_stats1.L_id))
     dota_team_id = pd.DataFrame(list(dota_team_id))
@@ -186,6 +192,7 @@ def calcaulate_ELO():
     db.player_Team_elo.drop()
     db.player_Team_elo.insert_many(records1)
     total_players_id['elo_score']=players_individual_elo
+    total_players_id['played_counted'] = player_played_counted
     total_players_id=total_players_id.set_index(['players_id'])
     total_players_id=total_players_id.reset_index(drop=True)
     total_players_id.rename(columns={0:'account_id'},inplace=True)

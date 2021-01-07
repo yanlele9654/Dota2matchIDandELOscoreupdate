@@ -711,9 +711,10 @@ class elo_player():
         current_elos_player = np.ones(shape=(n_players)) * mean_elo
         current_elos_team = np.ones(shape=(n_teams)) * mean_elo
         current_elos_combine = np.ones(shape=(n_teams)) * mean_elo # 结合队伍ELO与队员ELO分数
-        current_count = np.zeros(n_teams)
+        current_count = np.zeros(n_teams) #队伍比赛场次统计
+        current_count_player = np.zeros(n_players) #队员比赛场次统计
         one_month_team_played = np.zeros(n_teams)
-        team_playes_id = [[0]] * n_teams
+        team_playes_id = [[0]] * n_teams# 设置储存上一次比赛的队伍的队员，通过比较与下一次的队伍队员是否有变化来判断出最新的队伍更换队员的 时间
         current_team_playes_time = np.zeros(n_teams)
         for i in range(len(data_total_info)):
             W_team_id.append(dota_team_id['team_id'][data_total_info['W_id'][i]])
@@ -811,7 +812,34 @@ class elo_player():
             l_elo_before = current_elos_team[l_id]
             w_team_times = current_count[w_id]
             l_team_times = current_count[l_id]
+            '''
+            计算出每个选手参加的比赛场次
+            '''
+
+            w_player_1_times = current_count_player[w_account1]
+            w_player_2_times = current_count_player[w_account2]
+            w_player_3_times = current_count_player[w_account3]
+            w_player_4_times = current_count_player[w_account4]
+            w_player_5_times = current_count_player[w_account5]
+            l_player_1_times = current_count_player[l_account1]
+            l_player_2_times = current_count_player[l_account2]
+            l_player_3_times = current_count_player[l_account3]
+            l_player_4_times = current_count_player[l_account4]
+            l_player_5_times = current_count_player[l_account5]
             w_team_times, l_team_times = w_team_times + 1, l_team_times + 1  # 计算出战队到最新打了多少次比赛
+            w_player_1_times, w_player_2_times, w_player_3_times, w_player_4_times, w_player_5_times = w_player_1_times+1,w_player_2_times+1, w_player_3_times+1, w_player_4_times+1, w_player_5_times+1
+            l_player_1_times, l_player_2_times, l_player_3_times, l_player_4_times, l_player_5_times = l_player_1_times+1,l_player_2_times+1, l_player_3_times+1, l_player_4_times+1, l_player_5_times+1
+            
+            current_count_player[w_account1] = w_player_1_times
+            current_count_player[w_account2] = w_player_2_times
+            current_count_player[w_account3] = w_player_3_times
+            current_count_player[w_account4] = w_player_4_times
+            current_count_player[w_account5] = w_player_5_times
+            current_count_player[l_account1] = l_player_1_times
+            current_count_player[l_account2] = l_player_2_times
+            current_count_player[l_account3] = l_player_3_times
+            current_count_player[l_account4] = l_player_4_times
+            current_count_player[l_account5] = l_player_5_times
             current_count[w_id] = w_team_times
             current_count[l_id] = l_team_times
             if len(set(team_playes_id[w_id]) - set(W_account)) != 0:
@@ -904,4 +932,4 @@ class elo_player():
                 result_player.append(0)
         data_total_info['result_team'] = result_team
         data_total_info['result_player'] = result_player
-        return (current_elos_combine, current_count, current_team_playes_time, one_month_team_played,current_elos_player)
+        return (current_elos_combine, current_count, current_team_playes_time, one_month_team_played,current_elos_player,current_count_player)

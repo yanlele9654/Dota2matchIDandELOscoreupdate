@@ -1,50 +1,22 @@
-import threading
-import time, random, sys
+import pandas as pd
+import pymongo
+import time
 
+import DataBaseAccess_c as DBA 
 
-class Counter:
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.value = 0
+db_eng_1 = DBA.DbInfoGenerator('vpgame').info
+client = pymongo.MongoClient(db_eng_1['host'], 7974)
+# 连接database'damin'
+db = client['admin']
+# 'admin'的账号密码
+db.authenticate(db_eng_1['user'], db_eng_1['password'])
+print('success connet the database')
 
-    def increment(self):
-        self.lock.acquire()
-        self.value = value = self.value + 1
-        self.lock.release()
-        return value
+dota_players_2020 = pd.DataFrame(list(db.players_2020.find(
+    {}, {"match_id": 1, "account_id": 1, "win": 1, '_id': 0, 'start_time': 1})))
+dota_players_2020.to_csv('players_2020_info.csv')
 
-
-counter = Counter()
-cond = threading.Condition()
-
-
-class Worker(threading.Thread):
-
-    def run(self):
-        print(self.getName(), "-- created.")
-        cond.acquire()
-        # for i in range(10):
-        # pretend we're doing something that takes 10?00 ms
-        # value = counter.increment()
-        # time.sleep(random.randint(10, 100) / 1000.0)
-        cond.wait()
-        # print self.getName(), "-- task", "finished"
-        cond.release()
-
-
-if __name__ == '__main__':
-    max_num=0
-    try:
-        while(True):
-            Worker().start()  # start a worker
-            max_num+=1
-    except BaseException as e:
-        print("异常: ", type(e), e)
-        time.sleep(5)
-        print("maxium i={}",max_num)
-    finally:
-        cond.acquire()
-        cond.notifyAll()
-        cond.release()
-        time.sleep(3)
-        print(threading.currentThread().getName(), " quit")
+dota_stats3 = pd.DataFrame(list(db.dota_basic_data_2020.find({}, {
+    'radiant_team_id': 1, 'dire_team_id': 1, 'radiant_win': 1, 'match_id': 1, 'leagueid': 1, '_id': 0,
+    'start_time': 1, 'league.tier': 1, 'duration': 1, 'series_id': 1})))
+dota_stats3.to_csv('match_2020_info.csv')
