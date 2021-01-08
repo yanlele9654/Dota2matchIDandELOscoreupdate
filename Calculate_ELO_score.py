@@ -1,6 +1,7 @@
 import pandas as pd
 import pymongo
 import time
+import numpy as np
 def team_id_match(Major_chongqing_major_Elo):
     dota_team_id = set(list(Major_chongqing_major_Elo.W_id) + list(Major_chongqing_major_Elo.L_id))
 
@@ -91,8 +92,8 @@ def calcaulate_ELO():
     dota_match_total = dota_match_total.append(dota_match_2021)
     dota_match_total = dota_match_total.sort_values(by=['start_time', 'match_id'])
     dota_match_total = dota_match_total.dropna(subset=['match_id'])
-    dota_match_total[['match_id']] = dota_match_total[['match_id']].astype(int)
-    Winer_players['match_id'] = Winer_players['match_id'].astype(int)
+    dota_match_total[['match_id']] = dota_match_total[['match_id']].astype(np.int64)
+    Winer_players['match_id'] = Winer_players['match_id'].astype(np.int64)
     dota_stats1 = pd.merge(Winer_players, dota_match_total, how="inner", on='match_id')
 
     import itertools
