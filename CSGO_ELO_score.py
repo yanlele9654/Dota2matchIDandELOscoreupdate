@@ -1,3 +1,4 @@
+# %%
 import pandas as pd
 import pymongo
 import DataBaseAccess_c as DBA
@@ -180,3 +181,17 @@ match_db.CSGO_Team_elo.drop()
 match_db.CSGO_Team_elo.insert_many(records1)
 match_client.close()
 print('success update the CSGO ELO info')
+#%%
+match_result_total_elo.head()
+# %%
+for i in range(len(match_result_total_elo)):
+    if match_result_total_elo['w_elo_before_game'][i]>match_result_total_elo['l_elo_before_game'][i]:
+        match_result_total_elo.at[i,'result'] = 1
+    elif match_result_total_elo['w_elo_before_game'][i]==match_result_total_elo['l_elo_before_game'][i]:
+        match_result_total_elo.at[i,'result'] = 0.5
+    else:
+       match_result_total_elo.at[i,'result'] = 0 
+# %%
+import numpy as np
+np.mean(match_result_total_elo['result'])
+# %%
